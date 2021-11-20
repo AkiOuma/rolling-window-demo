@@ -12,14 +12,14 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-func NewDownStreamServer(failedRate float64) *gin.Engine {
-	if failedRate > 1 || failedRate < 0 {
+func NewDownStreamServer(successRate float64) *gin.Engine {
+	if successRate > 1 || successRate < 0 {
 		panic("invalid rate")
 	}
 	app := gin.Default()
 	app.GET("/api/down/v1", func(c *gin.Context) {
 		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-		if !rejectOrNot(failedRate) {
+		if !rejectOrNot(successRate) {
 			c.String(http.StatusInternalServerError, "reject from downstream")
 			return
 		}
@@ -28,6 +28,6 @@ func NewDownStreamServer(failedRate float64) *gin.Engine {
 	return app
 }
 
-func rejectOrNot(failedRate float64) bool {
-	return rand.Float64() < failedRate
+func rejectOrNot(successRate float64) bool {
+	return rand.Float64() < successRate
 }

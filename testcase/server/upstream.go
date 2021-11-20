@@ -9,29 +9,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Wrapper() gin.HandlerFunc {
-	r := hystrix.NewRollingWindow(10, 10, 0, time.Second*5)
-	r.Launch()
-	r.Monitor()
-	r.ShowStatus()
-	return func(c *gin.Context) {
-		if r.Broken() {
-			c.String(http.StatusInternalServerError, "reject by hystrix")
-			c.Abort()
-			return
-		}
-		c.Next()
-		if c.Writer.Status() != http.StatusOK {
-			r.RecordReqResult(false)
-		} else {
-			r.RecordReqResult(true)
-		}
-	}
-}
-
-func NewUpStreamServer() *gin.Engine {
+func NewUpStreamServer(
+	size,
+	reqThreshold int,
+	failedThreshold float64,
+	duration time.Duration,
+) *gin.Engine {
 	app := gin.Default()
-	app.GET("/api/up/v1", Wrapper(), upHandler)
+	app.GET("/api/up/v1", hystrix.Wrapper(
+		size,
+		reqThreshold,
+		failedThreshold,
+		duration,
+	), upHandler)
 	return app
 }
 
